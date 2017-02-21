@@ -1,0 +1,160 @@
+<html>
+  <head>
+    <script src="../bower_components/angular/angular.min.js"></script>
+    <script src="../bower_components/angular-sanitize/angular-sanitize.min.js"></script>
+    <script src="../bower_components/tv4/tv4.js"></script>
+    <script src="../bower_components/objectpath/lib/ObjectPath.js"></script>
+    <script src="../bower_components/angular-schema-form/dist/schema-form.min.js"></script>
+    <script src="../bower_components/angular-schema-form-bootstrap/bootstrap-decorator.min.js"></script>
+    <script src="../dist/angular-schema-form-d3.js"></script>
+
+    <link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="main.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.1/nv.d3.min.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.1/nv.d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-nvd3/1.0.5/angular-nvd3.min.js"></script>
+
+    <script>
+
+      angular.module('test', ["schemaForm","angularSchemaFormD3", 'nvd3']).controller('FormController', function($scope, $interval) {
+
+        $scope.schema = {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "title": "Name",
+              "description": "Name or alias",
+            }
+          }
+        };
+
+
+        $scope.model = {};
+
+        $scope.options = {
+          chart: {
+            type: 'lineChart',
+            height: 450,
+            margin : {
+              top: 20,
+              right: 20,
+              bottom: 40,
+              left: 55
+            },
+            x: function(d){ return d.x; },
+            y: function(d){ return d.y; },
+            useInteractiveGuideline: true,
+            dispatch: {
+              stateChange: function(e){ console.log("stateChange"); },
+              changeState: function(e){ console.log("changeState"); },
+              tooltipShow: function(e){ console.log("tooltipShow"); },
+              tooltipHide: function(e){ console.log("tooltipHide"); }
+            },
+            xAxis: {
+              axisLabel: 'Time (ms)'
+            },
+            yAxis: {
+              axisLabel: 'Voltage (v)',
+              tickFormat: function(d){
+                return d3.format('.02f')(d);
+              },
+              axisLabelDistance: -10
+            },
+            callback: function(chart){
+              console.log("!!! lineChart callback !!!");
+            }
+          },
+
+        };
+
+        $scope.data = sinAndCos();
+        $scope.model.name = sinAndCos();
+
+        $interval(function(){
+          console.log('updating data');
+          $scope.model.name = sinAndCos();
+        }, 5000);
+
+        /*Random Data Generator */
+        function sinAndCos() {
+          var sin = [],sin2 = [],
+                  cos = [];
+
+          //Data is represented as an array of {x,y} pairs.
+          for (var i = 0; i < 100; i++) {
+            sin.push({x: i, y: Math.sin(i/10)});
+            sin2.push({x: i, y: i % 10 == 5 ? null : Math.sin(i/10) *0.25 + 0.5});
+            cos.push({x: i, y: .5 * Math.cos(i/10+ 2) + Math.random() / 10});
+          }
+
+          //Line chart data should be sent as an array of series objects.
+          return [
+            {
+              values: sin,      //values - represents the array of {x,y} data points
+              key: 'Sine Wave', //key  - the name of the series.
+              color: '#ff7f0e'  //color - optional: choose your own line color.
+            },
+            {
+              values: cos,
+              key: 'Cosine Wave',
+              color: '#2ca02c'
+            },
+            {
+              values: sin2,
+              key: 'Another sine wave',
+              color: '#7777ff',
+              area: true      //area - set to true if you want this line to turn into a filled area chart.
+            }
+          ];
+        };
+
+        $scope.form = [{
+          "type":"angularschemaformd3",
+          "key":"name",
+          description: 'This is a cool chart',
+          "data": $scope.data,
+          "options": $scope.options
+        }];
+        $scope.debug = {schema: angular.copy($scope.schema), form: angular.copy($scope.form)};
+      });
+
+    </script>
+    <title>Testing angular schema form d3 ASF addon</title>
+  </head>
+
+  <body ng-app="test">
+    <div class="container-fluid" ng-controller="FormController">
+
+        <div class="col-sm-6 form">
+          <form sf-schema="schema" sf-form="form" sf-model="model"></form>
+        </div>
+
+        <div class="col-sm-6 debug">
+          <div class="wrapper">
+            <div class="row">
+              <div class="col-md-12">
+                <h4>Model</h4>
+                <pre>{{model | json}}</pre>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12">
+                <h4>Form</h4>
+                <pre>{{debug.form | json}}</pre>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12">
+                <h4>Schema</h4>
+                <pre>{{debug.schema | json}}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
+  </body>
+
+</html>
